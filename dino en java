@@ -1,0 +1,114 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+class DinosaurGame extends JFrame {
+    private static final int MAX_COLUMNS = 40;
+    private static final int MAX_ROWS = 10;
+    private static final int JUMP_HEIGHT = 2;
+    private static final int TIMER_DELAY = 100;
+
+    private int dinosaurX = 10;
+    private int dinosaurY = MAX_ROWS - 3;
+    private int jump = 0;
+    private int obstacleX = MAX_COLUMNS;
+    private int score = 0;
+    private Timer timer;
+    private JLabel scoreLabel;
+
+    public DinosaurGame() {
+        setTitle("Dinosaur Game");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 200);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        scoreLabel = new JLabel("Score: 0");
+        scoreLabel.setBounds(10, 0, 100, 20);
+        add(scoreLabel);
+
+        addKeyListener(new DinoKeyListener());
+
+        timer = new Timer(TIMER_DELAY, e -> {
+            update();
+            repaint();
+        });
+        timer.start();
+    }
+
+    private void update() {
+        obstacleX--;
+
+        if (playerCollided()) {
+            handleCollision();
+        }
+
+        if (obstacleX == 0) {
+            score++;
+            obstacleX = MAX_COLUMNS;
+        }
+
+        if (jump != 0) {
+            dinosaurY -= 2;
+            if (dinosaurY <= 0) {
+                jump = 0;
+                dinosaurY = MAX_ROWS - 3;
+            }
+        }
+
+        updateScoreLabel();
+    }
+
+    private void updateScoreLabel() {
+        scoreLabel.setText("Score: " + score);
+    }
+
+    private boolean playerCollided() {
+        return dinosaurX == obstacleX && dinosaurY == MAX_ROWS - 3;
+    }
+
+    private void handleCollision() {
+        timer.stop();
+        int choice = JOptionPane.showConfirmDialog(this, "¡Has perdido!\nTu puntaje es: " + score + "\n¿Quieres jugar de nuevo?", "Replay", JOptionPane.YES_NO_OPTION);
+        if (choice == JOptionPane.YES_OPTION) {
+            restart();
+        } else {
+            System.exit(0);
+        }
+    }
+
+    private void restart() {
+        dinosaurX = 10;
+        dinosaurY = MAX_ROWS - 3;
+        jump = 0;
+        obstacleX = MAX_COLUMNS;
+        score = 0;
+        updateScoreLabel();
+        timer.start();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+        for (int i = 0; i < MAX_COLUMNS; i++) {
+            g.drawString("_", i * 10, (MAX_ROWS - 3) * 20);
+        }
+
+        g.drawString("d", dinosaurX * 10, dinosaurY * 20);
+        g.drawString("T", obstacleX * 10, (MAX_ROWS - 3) * 20);
+    }
+
+    private class DinoKeyListener extends KeyAdapter {
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_SPACE && jump == 0) {
+                jump = JUMP_HEIGHT;
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new DinosaurGame().setVisible(true));
+    }
+}
